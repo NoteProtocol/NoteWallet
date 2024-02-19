@@ -1,0 +1,15 @@
+
+contract N20_Simple {
+  const bytes tick;
+  const int max;
+  const int lim;
+  const int dec;
+  public function mint(bytes tick, int amt, int total) {
+    require(this.max == 0 || total <= this.max);
+    require(tick == this.tick);
+    require(amt <= this.lim);
+  }
+  public function transfer(bytes tick) {
+    require(tick == this.tick);
+  }
+}

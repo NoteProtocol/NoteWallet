@@ -1,0 +1,40 @@
+
+contract N20_Pow {
+  const bytes tick;
+  const int max;
+  const int lim;
+  const int dec;
+  const bytes bitwork;
+  const int start;
+  function getBlockLimit(int height) : int {
+    require(height >= this.start);
+    int halvings = (height - this.start) / 1000;
+    halvings = halvings > 7 ? 7 : halvings;
+    int subsidy = (this.lim >> halvings);
+    return subsidy;
+  }
+  function getAmountLimit(int currentMined) : int {
+    int miningAmount = this.lim;
+    int threshold = this.max / 2;
+    loop (7) : halving {
+        if(currentMined >= threshold) {
+          miningAmount /= 2;
+          threshold += (this.max >> halving + 2);
+        }
+      }
+    return miningAmount;
+  }
+  public function mint(bytes tick, int amt, int total, int height, bytes tx) {
+    Sha256 txid = hash256(tx);
+    require(txid[0 : len(this.bitwork)] == this.bitwork);
+    require(this.max == 0 || total <= this.max);
+    require(tick == this.tick);
+    int limit1 = this.getBlockLimit(height);
+    int limit2 = this.getAmountLimit(total);
+    int limit = limit1 > limit2 ? limit2 : limit1;
+    require(amt <= limit && amt <= this.max - total);
+  }
+  public function transfer(bytes tick) {
+    require(tick == this.tick);
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "version": 9,
+  "compilerVersion": "1.19.1+commit.febd187",
+  "contract": "N20_Simple",
+  "md5": "62b13c754761fca0c6a13eca8a339e31",
+  "abi": [
+    {
+      "type": "function",
+      "name": "mint",
+      "index": 0,
+      "params": [
+        {
+          "name": "tick",
+          "type": "bytes"
+        },
+        {
+          "name": "amt",
+          "type": "int"
+        },
+        {
+          "name": "total",
+          "type": "int"
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "transfer",
+      "index": 1,
+      "params": [
+        {
+          "name": "tick",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "type": "constructor",
+      "params": [
+        {
+          "name": "tick",
+          "type": "bytes"
+        },
+        {
+          "name": "max",
+          "type": "int"
+        },
+        {
+          "name": "lim",
+          "type": "int"
+        },
+        {
+          "name": "dec",
+          "type": "int"
+        }
+      ]
+    }
+  ],
+  "hex": "<tick><max><lim><dec>54790087635279009c6455795379a16751686957795479876956795279a17777777777777777675479518763557954798777777777777767006868"
+}
