@@ -1,7 +1,8 @@
 {
   "name": "note-wallet",
   "version": "0.1.0",
-  "private": true,
+  "license": "MIT",
+  "author": "Note Team",
   "main": "./src/index.ts",
   "scripts": {
     "format": "prettier --check \"**/*.{js,cjs,mjs,ts,tsx,md,json}\"",

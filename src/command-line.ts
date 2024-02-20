@@ -88,92 +88,6 @@ export class CommandLineWallet {
         },
       )
       .command(
-        "mint [text]",
-        "Mint some text onchain",
-        (yargs) => {
-          yargs.positional("text", {
-            describe: "Text on chain",
-            type: "string",
-          });
-        },
-        async (argv) => {
-          if (!this.currentWallet) {
-            console.log("No wallet selected");
-            return;
-          }
-          if (argv.text) {
-            const text = (argv.text as string).replace(/^"|"$/g, "");
-            console.log("Text:", text);
-            const result = await this.currentWallet.mintText(text);
-            if (result.success) {
-              console.log(
-                "Succeeded:",
-                interpolate(this.currentWallet.explorer!.tx, {
-                  txId: result.txId,
-                }),
-              );
-            } else {
-              console.log(result.error);
-            }
-          }
-        },
-      )
-      .command(
-        "deploytoken [tick] [max] [limit]",
-        "Send a token",
-        (yargs) => {},
-        async (argv) => {
-          if (!this.currentWallet) {
-            console.log("No wallet selected");
-            return;
-          }
-          if (argv.tick && argv.max && argv.limit) {
-            const result = await this.currentWallet.deployToken(
-              argv.tick as string,
-              argv.max as bigint,
-              argv.limit as bigint,
-            );
-            if (result.success) {
-              console.log(
-                "Succeeded:",
-                interpolate(this.currentWallet.explorer!.tx, {
-                  txId: result.txId,
-                }),
-              );
-            } else {
-              console.log(result.error);
-            }
-          }
-        },
-      )
-      .command(
-        "minttoken [tick] [amt]",
-        "Mint tokens",
-        (yargs) => {},
-        async (argv) => {
-          if (!this.currentWallet) {
-            console.log("No wallet selected");
-            return;
-          }
-          if (argv.tick && argv.amt) {
-            const result = await this.currentWallet.mintToken(
-              argv.tick as string,
-              argv.amt as bigint,
-            );
-            if (result.success) {
-              console.log(
-                "Succeeded:",
-                interpolate(this.currentWallet.explorer!.tx, {
-                  txId: result.txId,
-                }),
-              );
-            } else {
-              console.log(result.error);
-            }
-          }
-        },
-      )
-      .command(
         "sendtoken [toScript] [tick] [amt]",
         "Send tokens to a script(hex)",
         (yargs) => {},
@@ -214,6 +128,19 @@ export class CommandLineWallet {
         },
       )
       .command(
+        "reset",
+        "Fix some issues",
+        (yargs) => {},
+        async (argv) => {
+          if (!this.currentWallet) {
+            console.log("No wallet selected");
+            return;
+          }
+          await this.currentWallet.reset()
+          console.log("Balance:", await this.currentWallet.getBalance());
+        },
+      )
+      .command(
         "tokenlist",
         "get Token List and Balance",
         (yargs) => {},
@@ -224,45 +151,6 @@ export class CommandLineWallet {
           }
           const balance = await this.currentWallet.tokenList();
           console.log("Token Balance:", balance);
-        },
-      )
-      .command(
-        "tokeninfo [tick]",
-        "get Token Info",
-        (yargs) => {},
-        async (argv) => {
-          if (!this.currentWallet) {
-            console.log("No wallet selected");
-            return;
-          }
-          if (argv.tick) {
-            const balance = await this.currentWallet.tokenInfo(
-              argv.tick as string,
-            );
-            console.log("Token Balance:", argv.tick as string, balance);
-          }
-        },
-      )
-      .command(
-        "deploynote",
-        "Deploy NOTE Token",
-        (yargs) => {},
-        async (argv) => {
-          if (!this.currentWallet) {
-            console.log("No wallet selected");
-            return;
-          }
-          const result = await deployPowToken(this.currentWallet);
-          if (result.success) {
-            console.log(
-              "Succeeded:",
-              interpolate(this.currentWallet.explorer!.tx, {
-                txId: result.txId,
-              }),
-            );
-          } else {
-            console.log(result.error);
-          }
         },
       )
       .command(

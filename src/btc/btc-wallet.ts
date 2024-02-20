@@ -244,7 +244,6 @@ export class BTCWallet extends Wallet {
       payload.data3 = bufferToScriptHex("");
       payload.data4 = bufferToScriptHex("");
     }
-    console.log("🚀 ~ BTCWallet ~ mint ~ payload:", payload);
     return payload;
   }
 
