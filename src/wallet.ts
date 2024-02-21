@@ -13,7 +13,6 @@ import type {
   NotePayload,
 } from "./types";
 import { Urchain } from "./urchain";
-import { bufferToScriptHex } from "./utils";
 
 export abstract class Wallet {
   public config: ICoinConfig;
@@ -126,11 +125,11 @@ export abstract class Wallet {
     });
     const buffer = Buffer.from(encodedData);
     const payload: NotePayload = {
-      data0: bufferToScriptHex(buffer),
-      data1: bufferToScriptHex(""),
-      data2: bufferToScriptHex(""),
-      data3: bufferToScriptHex(""),
-      data4: bufferToScriptHex(""),
+      data0: buffer.toString('hex'),
+      data1: "",
+      data2: "",
+      data3: "",
+      data4: "",
     };
     return payload;
   }

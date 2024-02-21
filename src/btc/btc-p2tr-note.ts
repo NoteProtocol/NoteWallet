@@ -205,8 +205,10 @@ export function createP2TRNotePsbt(
       .concat(tapLeafScript.script)
       .concat(tapLeafScript.controlBlock);
 
+    const finalScriptWitness = witnessStackToScriptWitness(witness);
+
     return {
-      finalScriptWitness: witnessStackToScriptWitness(witness),
+      finalScriptWitness,
     };
   }
   psbt.finalizeInput(0, getNoteFinalScripts);

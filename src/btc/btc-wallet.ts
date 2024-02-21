@@ -18,7 +18,7 @@ import {
   MAX_STACK_FULL_SIZE,
   MAX_STANDARD_STACK_ITEM_SIZE,
 } from "../constants";
-import { bufferToScriptHex, splitBufferIntoSegments } from "../utils";
+import { splitBufferIntoSegments } from "../utils";
 import { Wallet } from "../wallet";
 import {
   generateP2TRAddress,
@@ -202,11 +202,11 @@ export class BTCWallet extends Wallet {
       useBigInt64: true,
     });
     const payload: NotePayload = {
-      data0: bufferToScriptHex(""),
-      data1: bufferToScriptHex(""),
-      data2: bufferToScriptHex(""),
-      data3: bufferToScriptHex(""),
-      data4: bufferToScriptHex(""),
+      data0: "",
+      data1: "",
+      data2: "",
+      data3: "",
+      data4: "",
     };
     const buffer = Buffer.from(encodedData);
 
@@ -218,31 +218,21 @@ export class BTCWallet extends Wallet {
     }
     if (dataList) {
       payload.data0 =
-        dataList[0] !== undefined
-          ? bufferToScriptHex(dataList[0])
-          : bufferToScriptHex("");
+        dataList[0] !== undefined ? dataList[0].toString("hex") : "";
       payload.data1 =
-        dataList[1] !== undefined
-          ? bufferToScriptHex(dataList[1])
-          : bufferToScriptHex("");
+        dataList[1] !== undefined ? dataList[1].toString("hex") : "";
       payload.data2 =
-        dataList[2] !== undefined
-          ? bufferToScriptHex(dataList[2])
-          : bufferToScriptHex("");
+        dataList[2] !== undefined ? dataList[2].toString("hex") : "";
       payload.data3 =
-        dataList[3] !== undefined
-          ? bufferToScriptHex(dataList[3])
-          : bufferToScriptHex("");
+        dataList[3] !== undefined ? dataList[3].toString("hex") : "";
       payload.data4 =
-        dataList[4] !== undefined
-          ? bufferToScriptHex(dataList[4])
-          : bufferToScriptHex("");
+        dataList[4] !== undefined ? dataList[4].toString("hex") : "";
     } else {
-      payload.data0 = bufferToScriptHex(buffer);
-      payload.data1 = bufferToScriptHex("");
-      payload.data2 = bufferToScriptHex("");
-      payload.data3 = bufferToScriptHex("");
-      payload.data4 = bufferToScriptHex("");
+      payload.data0 = buffer.toString("hex");
+      payload.data1 = "";
+      payload.data2 = "";
+      payload.data3 = "";
+      payload.data4 = "";
     }
     return payload;
   }

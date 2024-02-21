@@ -51,3 +51,11 @@ sendtoken bc1p6ule9mj6u9tqzuq5zk9kn3sqlg788kzkpj63ff6j8jm26mvy8evsmqhz4n NOTE 10
 ```
 
 
+## Check Token Balance
+Wait some minutes for the transaction to be confirmed, then check the balance of N20 Tokens with 'balance' and 'tokenlist' command.
+
+```
+balance
+
+tokenlist
+```
