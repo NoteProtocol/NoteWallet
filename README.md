@@ -60,3 +60,10 @@ balance
 
 tokenlist
 ```
+
+## Send BTC Satoshis to others
+
+```
+send [other address] [satoshis]
+
+```
