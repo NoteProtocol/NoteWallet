@@ -9,7 +9,7 @@ install nodejs and npm or yarn or pnpm, first.
 then install the dependencies.
 
 ```
-pnpm i
+npm i
 ```
 
 ## Setup
