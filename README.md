@@ -40,16 +40,17 @@ tokenlist
 mintnote
 ```
 
-## sendtoken to tokenAddress of others
+## Send tokens to tokenAddress of others
 ```
 sendtoken [token address] [tick] [amount]
 ```
 
-an example
+a donate example
 ```
 sendtoken bc1p6ule9mj6u9tqzuq5zk9kn3sqlg788kzkpj63ff6j8jm26mvy8evsmqhz4n NOTE 1000000
 ```
 
+amount is with decimal point, 1 NOTE = 100,000,000 sats. the example amount 1,000,000 sats = 0.01 NOTE.
 
 ## Check Token Balance
 Wait some minutes for the transaction to be confirmed, then check the balance of N20 Tokens with 'balance' and 'tokenlist' command.
