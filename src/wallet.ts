@@ -49,15 +49,9 @@ export abstract class Wallet {
     return this.config.explorer[0];
   }
 
-  async fetchScriptHash(scriptHash) {
-    return await this.urchain.refresh(scriptHash);
-  }
-
   abstract showUtxos();
 
   abstract info();
-
-  abstract reset();
 
   protected importMnemonic(mnemonicStr: string, lang = "ENGLISH"): void {
     this.mnemoic = new Mnemonic(mnemonicStr, Mnemonic.Words[lang]);
@@ -134,9 +128,9 @@ export abstract class Wallet {
     return payload;
   }
 
-  abstract fetch(address: string);
-
   abstract tokenBalance(address: string, tick: string);
+
+  abstract refresh();
 
   async mintText(text: string) {
     return this.mint(this.buildN20Payload(text));

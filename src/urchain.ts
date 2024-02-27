@@ -82,6 +82,15 @@ export class Urchain {
     });
   }
 
+  async refresh(scriptHash: string): Promise<{
+    message: string;
+    code: string | number;
+  }> {
+    return await this._post("refresh", {
+      scriptHash,
+    });
+  }
+
   tokenBalance(
     scriptHash: string,
     tick: string,
@@ -105,53 +114,6 @@ export class Urchain {
     return await this._post("utxos", {
       scriptHashs,
       ...(typeof _satoshis !== "undefined" ? { satoshis: _satoshis } : {}),
-    });
-  }
-
-  async tx(txId: string): Promise<{
-    txId: string;
-    height: number;
-    txHex: string;
-    address: string;
-    time: number;
-    blockHash: string;
-    blockTime: number;
-    indexInBlock: number;
-  }> {
-    return await this._post("tx", {
-      txId,
-    });
-  }
-
-  async refresh(scriptHash: string): Promise<{
-    message: string;
-    code: string | number;
-  }> {
-    return await this._post("fetch-history", {
-      scriptHash,
-    });
-  }
-
-  async reset(scriptHash: string): Promise<{
-    message: string;
-    code: string | number;
-  }> {
-    return await this._post("reset", {
-      scriptHash,
-    });
-  }
-
-  async txo(txId: string, outputIndex: number) {
-    return await this._post("txo", {
-      txId,
-      outputIndex,
-    });
-  }
-
-  async txos(address: string, type: string) {
-    return await this._post("txos", {
-      address,
-      type,
     });
   }
 

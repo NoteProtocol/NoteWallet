@@ -52,13 +52,15 @@ export class BTCWallet extends Wallet {
     for (const utxo of noteUtxos) {
       utxo.type = "P2TR-NOTE";
     }
-    const payNotes = await this.urchain.utxos([
+    const payUtxos = await this.urchain.utxos([
       this.addressP2WPKH.scriptHash,
-      this.addressP2TR.scriptHash,
     ]);
+    for (const utxo of payUtxos) {
+      utxo.type = "P2WPKH";
+    }
     return {
       noteUtxos,
-      payNotes,
+      payUtxos,
     };
   }
 
@@ -73,6 +75,11 @@ export class BTCWallet extends Wallet {
       mainAddress: this.mainAddress.address,
       tokenAddress: this.tokenAddress.address,
     };
+  }
+
+  async refresh(){
+    await this.urchain.refresh(this.mainAddress.scriptHash);
+    await this.urchain.refresh(this.tokenAddress.scriptHash);
   }
 
   protected importMnemonic(mnemonicStr: string): void {
@@ -125,19 +132,15 @@ export class BTCWallet extends Wallet {
 
   async getBalance() {
     const fee= await this.urchain.getFeePerKb()
-    await this.fetchScriptHash(this.mainAddress.scriptHash);
-    await this.fetchScriptHash(this.addressP2TR.scriptHash);
-    await this.fetchScriptHash(this.addressP2TRNote.scriptHash);
     const p2wpkh = await this.urchain.balance(this.addressP2WPKH.scriptHash);
-    const p2tr = await this.urchain.balance(this.addressP2TR.scriptHash);
     const p2trnode = await this.urchain.balance(
       this.addressP2TRNote.scriptHash,
     );
     return {
       fee,
       mainAddress: {
-        confirmed: BigInt(p2wpkh.confirmed) + BigInt(p2tr.confirmed),
-        unconfirmed: BigInt(p2wpkh.unconfirmed) + BigInt(p2tr.unconfirmed),
+        confirmed: BigInt(p2wpkh.confirmed),
+        unconfirmed: BigInt(p2wpkh.unconfirmed),
       },
       tokenAddress: {
         confirmed: BigInt(p2trnode.confirmed),
@@ -149,8 +152,10 @@ export class BTCWallet extends Wallet {
   async send(toAddresses: ISendToAddress[]) {
     const utxos = await this.urchain.utxos([
       this.addressP2WPKH.scriptHash,
-      this.addressP2TR.scriptHash,
     ]);
+    for (const utxo of utxos) {
+      utxo.type = "P2WPKH";
+    }
     const feeRate = await this.urchain.getFeePerKb();
     const network =
       bitcoinjs.networks[
@@ -268,8 +273,10 @@ export class BTCWallet extends Wallet {
     if (undefined === payUtxos) {
       payUtxos = await this.urchain.utxos([
         this.addressP2WPKH.scriptHash,
-        this.addressP2TR.scriptHash,
       ]);
+      for (const utxo of payUtxos) {
+        utxo.type = "P2WPKH";
+      }
     }
     if (undefined === feeRate) {
       feeRate = (await this.urchain.getFeePerKb()).avgFee;
@@ -319,24 +326,10 @@ export class BTCWallet extends Wallet {
     };
   }
 
-  async fetch(address: string) {
-    const { scriptHash } = mapAddressToScriptHash(address, this.config.network);
-    await this.urchain.refresh(scriptHash);
-    const balance = await this.urchain.balance(scriptHash);
-    const utxos = await this.urchain.utxos([scriptHash]);
-
-    return { balance, utxos };
-  }
-
   async tokenBalance(address: string, tick: string) {
     const { scriptHash } = mapAddressToScriptHash(address, this.config.network);
     const balance = await this.urchain.tokenBalance(scriptHash, tick);
     return balance;
   }
 
-  async reset() {
-    await this.urchain.reset(this.addressP2WPKH.scriptHash);
-    await this.urchain.reset(this.addressP2TR.scriptHash);
-    await this.urchain.reset(this.addressP2TRNote.scriptHash);
-  }
 }

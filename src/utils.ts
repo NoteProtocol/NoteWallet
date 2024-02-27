@@ -75,3 +75,6 @@ export function stringToBytes(str: string) {
   const uint8array = encoder.encode(str);
   return getValidatedHexString(Buffer.from(uint8array).toString("hex"));
 }
+
+export const sleep = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(() => resolve(), ms));

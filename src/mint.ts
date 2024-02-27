@@ -25,7 +25,7 @@ const mintData = {
   p: "n20",
   op: "mint",
   tick,
-  amt: 1000n * 10n ** 8n,
+  amt: 100n * 10n ** 8n,
 };
 
 export async function deployPowToken(wallet: Wallet) {
@@ -81,7 +81,12 @@ export async function mintPowToken(wallet: Wallet) {
       const verifyResult = offlineVerify(powJson, dataMap, "mint");
       console.log("🚀 ~ mintPowToken ~ verifyResult:", verifyResult, tx);
       if (verifyResult.success) {
-        result = await wallet.broadcastTransaction(tx);
+        try{
+          result = await wallet.broadcastTransaction(tx);
+        }catch(e:any){
+          console.log("🚀 Try Again ~ mintPowToken ~ e:", e.message??e);
+          result = await wallet.broadcastTransaction(tx);
+        }
         locktime = 0;
         toAddress = undefined;
         noteNote = undefined;

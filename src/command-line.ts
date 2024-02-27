@@ -4,7 +4,7 @@ import yargs from "yargs";
 import type { Wallet } from "./wallet";
 import { BTCWallet } from "./btc/btc-wallet";
 import { coins, WALLET_MNEMONIC } from "./config";
-import { deployPowToken, mintPowToken } from "./mint";
+import { mintPowToken } from "./mint";
 import { interpolate } from "./utils";
 
 export class CommandLineWallet {
@@ -128,7 +128,7 @@ export class CommandLineWallet {
         },
       )
       .command(
-        "reset",
+        "refresh",
         "Fix some issues",
         (yargs) => {},
         async (argv) => {
@@ -136,10 +136,11 @@ export class CommandLineWallet {
             console.log("No wallet selected");
             return;
           }
-          await this.currentWallet.reset()
+          await this.currentWallet.refresh()
           console.log("Balance:", await this.currentWallet.getBalance());
         },
       )
+
       .command(
         "tokenlist",
         "get Token List and Balance",
