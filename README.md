@@ -67,3 +67,12 @@ tokenlist
 send [other address] [satoshis]
 
 ```
+
+## Fix some utxos issues
+
+If you some utxos issues, you can fix them with 'refresh' command.
+if you don't know what it means, DONT USE IT.
+```
+refresh
+
+```

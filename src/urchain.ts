@@ -1,5 +1,7 @@
 import type { AxiosError, AxiosResponse } from "axios";
 import axios from "axios";
+import mempoolJS from "@mempool/mempool.js";
+const mempoolHostname = "mempool.space";
 
 import type { IBroadcastResult, IFees, IToken, IUtxo } from "./types";
 
@@ -70,7 +72,25 @@ export class Urchain {
   }
 
   async getFeePerKb(): Promise<IFees> {
-    return await this._get("fees", {});
+    const {
+      bitcoin: { fees },
+    } = mempoolJS({
+      hostname: mempoolHostname,
+    });
+
+    const feesRecommended = await fees.getFeesRecommended();
+    return {
+      slowFee:
+        Math.min(feesRecommended.hourFee, feesRecommended.halfHourFee) * 1000,
+      avgFee:
+        Math.max(feesRecommended.hourFee, feesRecommended.halfHourFee) * 1000,
+      fastFee:
+        Math.max(
+          feesRecommended.hourFee,
+          feesRecommended.halfHourFee,
+          feesRecommended.fastestFee,
+        ) * 1000,
+    };
   }
 
   balance(scriptHash: string): Promise<{

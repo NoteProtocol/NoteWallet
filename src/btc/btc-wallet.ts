@@ -105,7 +105,7 @@ export class BTCWallet extends Wallet {
 
     const network =
       bitcoinjs.networks[
-        this.config.network === "livenet" ? "bitcoin" : "testnet"
+        this.config.network === "testnet" ? "testnet": "bitcoin"
       ];
 
     const addressP2WPKH = generateP2WPHKAddress(
@@ -159,7 +159,7 @@ export class BTCWallet extends Wallet {
     const feeRate = await this.urchain.getFeePerKb();
     const network =
       bitcoinjs.networks[
-        this.config.network === "livenet" ? "bitcoin" : "testnet"
+        this.config.network === "testnet" ? "testnet": "bitcoin"
       ];
 
     const privateKeyBuffer = new PrivateKey(
@@ -283,7 +283,7 @@ export class BTCWallet extends Wallet {
     }
     const network =
       bitcoinjs.networks[
-        this.config.network === "livenet" ? "bitcoin" : "testnet"
+        this.config.network === "testnet" ? "testnet": "bitcoin"
       ];
 
     const privateKeyBuffer = new PrivateKey(

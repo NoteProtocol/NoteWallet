@@ -1,6 +1,6 @@
 {
   "name": "note-wallet",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "license": "MIT",
   "author": "Note Team",
   "main": "./src/index.ts",
@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@bitcoinerlab/secp256k1": "1.0.5",
+    "@mempool/mempool.js": "^2.3.0",
     "@msgpack/msgpack": "3.0.0-beta2",
     "axios": "^1.6.7",
     "bitcoinjs-lib": "^6.1.5",
