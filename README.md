@@ -93,7 +93,7 @@ send [other address] [satoshis]
 We offer several example programs for developers to publish their own contracts, deploy tokens, and provide mining programs. The code is in `publish.ts` and `mint.ts`. You need to understand the code and write your own program logic. Feel free to follow us on [Twitter](https://x.com/NoteProtocol) and join our [Discord](https://discord.gg/tGBHKDPkF5) to interact with other builders.
 
 
-## Publish Smart Contratc
+## Publish Smart Contract
 ```
 publish
 ```
