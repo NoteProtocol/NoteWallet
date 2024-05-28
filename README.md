@@ -90,7 +90,7 @@ send [other address] [satoshis]
 
 # Developmet
 
-We offer several example programs for developers to publish their own contracts, deploy tokens, and provide mining programs. The code is in `publish.ts` and `mint.ts`. You need to understand the code and write your own program logic. Feel free to follow us on Twitter and join our Discord to interact with other builders.
+We offer several example programs for developers to publish their own contracts, deploy tokens, and provide mining programs. The code is in `publish.ts` and `mint.ts`. You need to understand the code and write your own program logic. Feel free to follow us on [Twitter](https://x.com/NoteProtocol) and join our [Discord](https://discord.gg/tGBHKDPkF5) to interact with other builders.
 
 ### Testnet4 Faucet
 
@@ -112,5 +112,5 @@ deploy
 ```
 mint
 ```
-# Notice:
+# Notice
 Please thoroughly test on the testnet before deploying to the mainnet. No one is responsible for the accuracy of protocols, indexers, or contract codes, nor does anyone guarantee the value of assets. Write smart contracts entirely at your own risk.
