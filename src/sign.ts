@@ -1,10 +1,10 @@
 export function signTx(
-  coin,
-  tx,
-  privateKey,
-  lockingScript,
-  inputAmount,
-  inputIndex,
+  coin: any,
+  tx: string,
+  privateKey: string,
+  lockingScript: any,
+  inputAmount: number,
+  inputIndex: number
 ) {
   if (!tx) {
     throw new Error("param tx can not be empty");
@@ -20,7 +20,7 @@ export function signTx(
   }
   if (typeof lockingScript === "string") {
     throw new Error(
-      "Breaking change: LockingScript in ASM format is no longer supported, please use the lockingScript object directly",
+      "Breaking change: LockingScript in ASM format is no longer supported, please use the lockingScript object directly"
     );
   }
 
@@ -59,7 +59,7 @@ export function signTx(
     inputIndex,
     lockingScript,
     new coin.crypto.BN(inputAmount),
-    flags,
+    flags
   )
     .toTxFormat()
     .toString("hex");

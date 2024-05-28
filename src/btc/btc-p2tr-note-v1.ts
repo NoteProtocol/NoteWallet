@@ -1,12 +1,12 @@
 import type {ISendToAddress, IUtxo, NotePayload} from "../types";
 import {MAX_SEQUENCE} from "../constants";
-import {bitcoin, ECPair, ECPairInterface} from "./btc-ecc";
-import {generateP2TRNoteInfo} from "./btc-note";
+import {bitcoin, ECPairInterface, toXOnly} from "./btc-ecc";
+import {generateP2TRNoteInfoV1} from "./btc-note";
 import {addPsbtPayUtxos, signPsbtInput} from "./btc-psbt";
 import {witnessStackToScriptWitness} from "./witness_stack_to_script_witness";
 import {MIN_SATOSHIS} from "../config";
 
-export function createP2TRNotePsbt(
+export function createP2TRNotePsbtV1(
   privateKey: ECPairInterface,
   notePayload: NotePayload,
   noteUtxos: IUtxo[],
@@ -19,18 +19,12 @@ export function createP2TRNotePsbt(
 ) {
   const pubkey = privateKey.publicKey;
 
-  const p2note = generateP2TRNoteInfo(pubkey, network);
+  const p2note = generateP2TRNoteInfoV1(pubkey, network);
   const tapLeafNoteScript = {
     leafVersion: p2note.noteRedeem.redeemVersion,
     script: p2note.noteRedeem.output,
     controlBlock:
       p2note.noteP2TR.witness![p2note.noteP2TR.witness!.length - 1]!,
-  };
-  const tapLeafP2PKScript = {
-    leafVersion: p2note.p2pkRedeem.redeemVersion,
-    script: p2note.p2pkRedeem.output,
-    controlBlock:
-      p2note.p2pkP2TR.witness![p2note.p2pkP2TR.witness!.length - 1]!,
   };
 
   const psbt = new bitcoin.Psbt({network});
@@ -38,33 +32,17 @@ export function createP2TRNotePsbt(
   psbt.setLocktime(notePayload.locktime ?? 0); // to change tx
   let totalInput = 0;
   {
-    const noteUtxo = noteUtxos[0]!;
-
-    const input = {
-      hash: noteUtxo.txId,
-      index: noteUtxo.outputIndex,
-      sequence: MAX_SEQUENCE,
-      witnessUtxo: {
-        script: p2note.noteP2TR.output!,
-        value: noteUtxo.satoshis,
-      },
-      tapLeafScript: [tapLeafNoteScript],
-    };
-    psbt.addInput(input);
-    totalInput += noteUtxo.satoshis;
-  }
-  {
-    for (let i = 1; i < noteUtxos.length; i++) {
+    for (let i = 0; i < noteUtxos.length; i++) {
       const noteUtxo = noteUtxos[i]!;
       const input = {
         hash: noteUtxo.txId,
         index: noteUtxo.outputIndex,
         sequence: MAX_SEQUENCE,
         witnessUtxo: {
-          script: p2note.p2pkP2TR.output!,
+          script: p2note.noteP2TR.output!,
           value: noteUtxo.satoshis,
         },
-        tapLeafScript: [tapLeafP2PKScript],
+        tapLeafScript: [tapLeafNoteScript],
       };
       psbt.addInput(input);
       totalInput += noteUtxo.satoshis;
@@ -93,22 +71,8 @@ export function createP2TRNotePsbt(
     });
   }
 
-  for (let i = 0; i < noteUtxos.length; i++) {
-    const privateKeyWif = noteUtxos[i]?.privateKeyWif;
-    if (privateKeyWif) {
-      signPsbtInput(ECPair.fromWIF(privateKeyWif, network), psbt, i);
-    } else {
-      signPsbtInput(privateKey, psbt, i);
-    }
-  }
-
-  for (let i = noteUtxos.length; i < psbt.inputCount; i++) {
-    const privateKeyWif = payUtxos[i - noteUtxos.length]?.privateKeyWif;
-    if (privateKeyWif) {
-      signPsbtInput(ECPair.fromWIF(privateKeyWif, network), psbt, i);
-    } else {
-      signPsbtInput(privateKey, psbt, i);
-    }
+  for (let i = 0; i < psbt.inputCount; i++) {
+    signPsbtInput(privateKey, psbt, i);
   }
 
   function getNoteFinalScripts(index: number, input: any) {
@@ -130,9 +94,11 @@ export function createP2TRNotePsbt(
       finalScriptWitness,
     };
   }
-  psbt.finalizeInput(0, getNoteFinalScripts);
+  for (let i = 0; i < noteUtxos.length; i++) {
+    psbt.finalizeInput(i, getNoteFinalScripts);
+  }
 
-  for (let i = 1; i < psbt.inputCount; i++) {
+  for (let i = noteUtxos.length; i < psbt.inputCount; i++) {
     psbt.finalizeInput(i);
   }
   return psbt.extractTransaction();

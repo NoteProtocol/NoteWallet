@@ -9,9 +9,9 @@
   "quoteProps": "as-needed",
   "requirePragma": false,
   "semi": true,
-  "singleQuote": true,
-  "tabWidth": 4,
+  "singleQuote": false,
+  "tabWidth": 2,
   "trailingComma": "es5",
   "useTabs": false,
-  "parser": "json"
+  "parser": "typescript"
 }

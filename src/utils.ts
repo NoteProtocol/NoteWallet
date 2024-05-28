@@ -1,15 +1,15 @@
-import { bin2num, bsv, getValidatedHexString, num2bin } from "scryptlib";
+import {bin2num, bsv, getValidatedHexString, num2bin} from "scryptlib";
 
-import { MAX_DATA_SEGMENTS, MAX_SCRIPT_ELEMENT_SIZE } from "./constants";
+import {MAX_DATA_SEGMENTS, MAX_SCRIPT_ELEMENT_SIZE} from "./constants";
 
 export function splitBufferIntoSegments(
   buffer: Buffer,
   segmentSize = MAX_SCRIPT_ELEMENT_SIZE,
-  maxSegments = MAX_DATA_SEGMENTS,
+  maxSegments = MAX_DATA_SEGMENTS
 ): Buffer[] {
   if (buffer.length / segmentSize > maxSegments) {
     throw new Error(
-      `Buffer size exceeds the maximum allowed number of segments (${maxSegments}).`,
+      `Buffer size exceeds the maximum allowed number of segments (${maxSegments}).`
     );
   }
 
@@ -19,7 +19,7 @@ export function splitBufferIntoSegments(
     const start = i;
     const end = Math.min((i += segmentSize), buffer.length);
     const segment = buffer.subarray(start, end);
-    segments.push(segment);
+    segments.push(Buffer.from(segment));
   }
 
   return segments;
@@ -34,7 +34,7 @@ export function bufferToScriptHex(buffer: Buffer | ""): string {
   return bsv.Script.fromASM(buffer.toString("hex")).toHex();
 }
 
-export function interpolate(template, params) {
+export function interpolate(template: string, params: any) {
   const names = Object.keys(params);
   const vals = Object.values(params);
   // eslint-disable-next-line @typescript-eslint/no-implied-eval
@@ -57,8 +57,8 @@ export function assert(arg0: boolean, arg1?: string) {
  */
 export function int2ByteString(n: bigint, size?: number) {
   if (size === undefined) {
-    const num = new bsv.crypto.BN(n);
-    return num.toSM({ endian: "little" }).toString("hex");
+    const num = new bsv.crypto.BN(n.toString());
+    return num.toSM({endian: "little"}).toString("hex");
   }
   return num2bin(n, Number(size));
 }
@@ -76,5 +76,14 @@ export function stringToBytes(str: string) {
   return getValidatedHexString(Buffer.from(uint8array).toString("hex"));
 }
 
-export const sleep = (ms: number) =>
-  new Promise<void>((resolve) => setTimeout(() => resolve(), ms));
+export async function sleep(ms: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
+
+export async function awaitOneByOne<T extends readonly unknown[] | []>(
+  values: T
+) {
+  for (const func of values) {
+    await func;
+  }
+}

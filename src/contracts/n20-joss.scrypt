@@ -1,0 +1,17 @@
+
+contract N20_Joss {
+  static bytes tick = "JOSS";
+  static int max = 0;
+  static int lim = 10000;
+  static int dec = 0;
+  public function mint(bytes tick, int amt) {
+    require(tick == N20_Joss.tick);
+    require(amt == N20_Joss.lim);
+  }
+  public function transfer() {
+    require(false);
+  }
+  public function burn(bytes tick) {
+    require(tick == N20_Joss.tick);
+  }
+}

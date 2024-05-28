@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
-        "target": "ES2022",
-        "baseUrl": "src",
+        "target": "ESNext",
+        "baseUrl": ".",
         "useDefineForClassFields": false,
         "module": "NodeNext",
         "moduleResolution": "NodeNext",
@@ -14,7 +14,6 @@
         "esModuleInterop": true,
         "resolveJsonModule": true,
         "isolatedModules": true,
-        "moduleDetection": "force",
         "incremental": true,
         "noUncheckedIndexedAccess": true,
         "noImplicitAny": false

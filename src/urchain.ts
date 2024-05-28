@@ -1,9 +1,7 @@
-import type { AxiosError, AxiosResponse } from "axios";
+import type {AxiosError, AxiosResponse} from "axios";
 import axios from "axios";
-import mempoolJS from "@mempool/mempool.js";
-const mempoolHostname = "mempool.space";
 
-import type { IBroadcastResult, IFees, IToken, IUtxo } from "./types";
+import type {IBroadcastResult, IFees, IToken, IUtxo} from "./types";
 
 export class Urchain {
   private _httpClient;
@@ -28,7 +26,7 @@ export class Urchain {
         `${error.config?.baseURL}${error.config?.url}`,
         error.response.status,
         error.response.headers,
-        error.response.data,
+        error.response.data
       );
       throw new Error(JSON.stringify(error.response.data));
     } else if (error.request) {
@@ -40,7 +38,7 @@ export class Urchain {
     }
   }
 
-  _get(command, params) {
+  _get(command: string, params: any) {
     // Create query with given parameters, if applicable
     params = params || {};
 
@@ -54,7 +52,7 @@ export class Urchain {
       .catch(this._parseError);
   }
 
-  _post(command, data) {
+  _post(command: string, data: any) {
     const options = {
       headers: {
         "Content-Type": "application/json",
@@ -72,25 +70,7 @@ export class Urchain {
   }
 
   async getFeePerKb(): Promise<IFees> {
-    const {
-      bitcoin: { fees },
-    } = mempoolJS({
-      hostname: mempoolHostname,
-    });
-
-    const feesRecommended = await fees.getFeesRecommended();
-    return {
-      slowFee:
-        Math.min(feesRecommended.hourFee, feesRecommended.halfHourFee) * 1000,
-      avgFee:
-        Math.max(feesRecommended.hourFee, feesRecommended.halfHourFee) * 1000,
-      fastFee:
-        Math.max(
-          feesRecommended.hourFee,
-          feesRecommended.halfHourFee,
-          feesRecommended.fastestFee,
-        ) * 1000,
-    };
+    return await this._get("fee-per-kb", {});
   }
 
   balance(scriptHash: string): Promise<{
@@ -102,18 +82,9 @@ export class Urchain {
     });
   }
 
-  async refresh(scriptHash: string): Promise<{
-    message: string;
-    code: string | number;
-  }> {
-    return await this._post("refresh", {
-      scriptHash,
-    });
-  }
-
   tokenBalance(
     scriptHash: string,
-    tick: string,
+    tick: string
   ): Promise<{
     confirmed: bigint;
     unconfirmed: bigint;
@@ -133,7 +104,15 @@ export class Urchain {
   async utxos(scriptHashs: string[], _satoshis?: bigint): Promise<IUtxo[]> {
     return await this._post("utxos", {
       scriptHashs,
-      ...(typeof _satoshis !== "undefined" ? { satoshis: _satoshis } : {}),
+      ...(typeof _satoshis !== "undefined" ? {satoshis: _satoshis} : {}),
+    });
+  }
+
+  async tokenutxos(scriptHashs: string[], tick: string, amount?: bigint) {
+    return await this._post("token-utxos", {
+      scriptHashs,
+      tick,
+      ...(typeof amount !== "undefined" ? {amount: amount} : {}),
     });
   }
 
@@ -152,6 +131,6 @@ export class Urchain {
   }
 
   async tokenInfo(tick: string) {
-    return await this._post("token-info", { tick });
+    return await this._post("token-info", {tick});
   }
 }

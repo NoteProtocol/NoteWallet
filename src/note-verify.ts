@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { Artifact, SupportedParamType, TxContext } from "scryptlib";
-import { buildContractClass, getValidatedHexString } from "scryptlib";
+import type {Artifact, SupportedParamType, TxContext} from "scryptlib";
+import {buildContractClass, getValidatedHexString} from "scryptlib";
 
-import { byteString2Int } from "./utils";
+// import {byteString2Int} from "./utils";
 
 export function buildOfflineContractInstance(
   abiJson: Artifact,
-  dataMap: object,
+  dataMap: object
 ) {
   const constructor = "constructor";
   const paramsMap: Record<string, SupportedParamType[]> = {
@@ -36,7 +36,7 @@ export function buildOfflineContractInstance(
               params.push(BigInt(data[param.name]));
             } else {
               //a buffer
-              params.push(byteString2Int(data[param.name].toString("hex")));
+              // params.push(byteString2Int(data[param.name].toString("hex")));
             }
           } else if (param.type === "bytes") {
             params.push(getValidatedHexString(data[param.name]));
@@ -51,18 +51,18 @@ export function buildOfflineContractInstance(
   }
 
   const instance = new N20(...paramsMap[constructor]!);
-  return { N20, instance, paramsMap };
+  return {N20, instance, paramsMap};
 }
 
 export function offlineVerify(
   abiJson: Artifact,
   dataMap: object,
   method: string,
-  txContext?: TxContext,
+  txContext?: TxContext
 ) {
-  const { N20, instance, paramsMap } = buildOfflineContractInstance(
+  const {N20, instance, paramsMap} = buildOfflineContractInstance(
     abiJson,
-    dataMap,
+    dataMap
   );
   if (!paramsMap[method]) {
     throw new Error(`method function is not exist in data`);
@@ -70,7 +70,7 @@ export function offlineVerify(
   const unlocking = N20.abiCoder.encodePubFunctionCall(
     instance,
     method,
-    paramsMap[method]!,
+    paramsMap[method]!
   );
   const result = instance.run_verify(unlocking.unlockingScript);
   return result;

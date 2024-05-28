@@ -1,0 +1,52 @@
+{
+  "version": 9,
+  "compilerVersion": "1.19.2+commit.c3a20a0",
+  "contract": "N20_Joss",
+  "md5": "46189e74ba31547988de1a1191ea3619",
+  "structs": [],
+  "library": [],
+  "alias": [],
+  "abi": [
+    {
+      "type": "function",
+      "name": "mint",
+      "index": 0,
+      "params": [
+        {
+          "name": "tick",
+          "type": "bytes"
+        },
+        {
+          "name": "amt",
+          "type": "int"
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "transfer",
+      "index": 1,
+      "params": []
+    },
+    {
+      "type": "function",
+      "name": "burn",
+      "index": 2,
+      "params": [
+        {
+          "name": "tick",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "type": "constructor",
+      "params": []
+    }
+  ],
+  "stateProps": [],
+  "buildType": "debug",
+  "file": "file:///Users/lilong/Works/scryptdemo/artifacts/n20-joss.scrypt",
+  "hex": "044a4f53530210275279008763547952798769537951799c7777777777675279518763007777776752795287635379527987777777776700686868",
+  "sourceMapFile": ""
+}
