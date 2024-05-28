@@ -23,6 +23,31 @@ Setup your wallet WALLET_MNEMONIC in `.env`, if you keep empty, the tool will ge
 pnpm run start
 ```
 
+## Choose Network
+```
+use BTClivenet
+```
+or
+```
+use BTCtestnet
+```
+
+## Upgrade Token to bind UTXOs
+```
+tokenlist
+```
+
+When you possess a 'needUpgrade' flag token, it's essential to upgrade it in order to bind the UTXO within the specified version.
+
+```
+up [token name]
+```
+
+ex.
+```
+up NOTE
+```
+
 ## Show Balance
 ```
 balance
@@ -35,11 +60,6 @@ Charge some satoshis to `mainAddress`, then check the balance of `mainAddress` w
 tokenlist
 ```
 
-## Mint NOTE Token
-```
-mintnote
-```
-
 ## Send tokens to tokenAddress of others
 ```
 sendtoken [token address] [tick] [amount]
@@ -47,7 +67,7 @@ sendtoken [token address] [tick] [amount]
 
 a donate example
 ```
-sendtoken bc1p6ule9mj6u9tqzuq5zk9kn3sqlg788kzkpj63ff6j8jm26mvy8evsmqhz4n NOTE 1000000
+sendtoken bc1pcuh2nlk4zld8ljklal64ks4hznh7q94lxkguzrsk55dg84qgrt6qswzywl NOTE 1000000
 ```
 
 amount is with decimal point, 1 NOTE = 100,000,000 sats. the example amount 1,000,000 sats = 0.01 NOTE.
@@ -68,11 +88,29 @@ send [other address] [satoshis]
 
 ```
 
-## Fix some utxos issues
+# Developmet
 
-If you some utxos issues, you can fix them with 'refresh' command.
-if you don't know what it means, DONT USE IT.
-```
-refresh
+We offer several example programs for developers to publish their own contracts, deploy tokens, and provide mining programs. The code is in `publish.ts` and `mint.ts`. You need to understand the code and write your own program logic. Feel free to follow us on Twitter and join our Discord to interact with other builders.
 
+### Testnet4 Faucet
+
+https://testnet4.anyone.eu.org/
+
+https://mempool.space/testnet4/faucet
+
+## Publish Smart Contratc
 ```
+publish
+```
+
+## Deploy Token
+```
+deploy
+```
+
+## Mint Token
+```
+mint
+```
+# Notice:
+Please thoroughly test on the testnet before deploying to the mainnet. No one is responsible for the accuracy of protocols, indexers, or contract codes, nor does anyone guarantee the value of assets. Write smart contracts entirely at your own risk.
