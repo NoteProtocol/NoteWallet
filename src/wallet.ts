@@ -171,16 +171,21 @@ export abstract class Wallet {
     };
   }>;
 
-  async fetchAllAccountUtxos() {
+  async fetchAllAccountUtxos(includeUnbondedTokenUtxos = false) {
     const allScriptHashs: string[] = [];
     const allAccounts = new Map<string, IWalletAccount>();
     for (const account of Object.values(this.accountCollection)) {
-      allScriptHashs.push(
-        account.mainAddress!.scriptHash,
-        account.tokenAddress!.scriptHash
-      );
+      allScriptHashs.push(account.mainAddress!.scriptHash);
       allAccounts.set(account.mainAddress!.scriptHash, account);
-      allAccounts.set(account.tokenAddress!.scriptHash, account);
+      // In blockchain development, it's not uncommon for users to accidentally send small
+      // amounts of Bitcoin (satoshis) to token addresses. To recover these funds, there's an
+      // option that allows you to access the related Unspent Transaction Outputs (UTXOs). But
+      // beware! Enabling this feature could lead to unintended spending of your tokens. Always
+      // double-check before proceeding!
+      if (includeUnbondedTokenUtxos) {
+        allScriptHashs.push(account.tokenAddress!.scriptHash);
+        allAccounts.set(account.tokenAddress!.scriptHash, account);
+      }
     }
     const allUtxos: IUtxo[] = await this.urchain.utxos(allScriptHashs);
     for (const utxo of allUtxos) {
