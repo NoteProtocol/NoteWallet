@@ -148,10 +148,11 @@ export abstract class Wallet {
 
   abstract info(): any;
 
-  async getTokenUtxos(tick: string) {
+  async getTokenUtxos(tick: string, amount?: bigint) {
     const tokenUtxos = await this.urchain.tokenutxos(
       [this.currentAccount.tokenAddress!.scriptHash],
-      tick
+      tick,
+      amount
     );
     if (tokenUtxos.length === 0) {
       throw new Error("No UTXOs found");
@@ -262,7 +263,7 @@ export abstract class Wallet {
   }
 
   async sendToken(toAddress: string, tick: string, amt: bigint) {
-    const tokenUtxos = await this.getTokenUtxos(tick);
+    const tokenUtxos = await this.getTokenUtxos(tick, amt);
     const missedTokenUtxos = await this.urchain.tokenutxos(
       [this.currentAccount.mainAddress!.scriptHash],
       tick
