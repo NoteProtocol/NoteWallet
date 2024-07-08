@@ -7,7 +7,7 @@ import type {Wallet} from "./wallet";
 import {MAX_LOCKTIME} from "./constants";
 import powJson from "./contracts/n20-pow.json";
 
-import {offlineVerify} from "./note-verify";
+import {offlineVerify} from "scrypt-verify";
 import {IDeployN20Data, IMintN20Data} from "./types";
 import {stringToBytes} from "./utils";
 

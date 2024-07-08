@@ -21,6 +21,7 @@
     "bitcore-mnemonic": "^10.0.36",
     "dotenv": "^16.4.5",
     "ecpair": "^2.1.0",
+    "scrypt-verify": "github:NoteProtocol/scrypt-verify",
     "scryptlib": "^2.1.42",
     "varuint-bitcoin": "^1.1.2",
     "yargs": "^17.7.2"
