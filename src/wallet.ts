@@ -264,20 +264,10 @@ export abstract class Wallet {
 
   async sendToken(toAddress: string, tick: string, amt: bigint) {
     const tokenUtxos = await this.getTokenUtxos(tick, amt);
-    const missedTokenUtxos = await this.urchain.tokenutxos(
-      [this.currentAccount.mainAddress!.scriptHash],
-      tick
-    );
-    const missedBalance = missedTokenUtxos.reduce(
+    const balance = tokenUtxos.reduce(
       (acc: bigint, cur: ITokenUtxo) => acc + BigInt(cur.amount),
       0n
     );
-    const balance =
-      missedBalance +
-      tokenUtxos.reduce(
-        (acc: bigint, cur: ITokenUtxo) => acc + BigInt(cur.amount),
-        0n
-      );
     if (balance < amt) {
       throw new Error("Insufficient balance");
     }
@@ -287,7 +277,11 @@ export abstract class Wallet {
         amount: MIN_SATOSHIS,
       },
     ];
-    if (balance > BigInt(amt)) {
+    const missedTokenUtxos = await this.urchain.tokenutxos(
+      [this.currentAccount.mainAddress!.scriptHash],
+      tick
+    );
+    if (balance > BigInt(amt) || missedTokenUtxos.length > 0) {
       toAddresses.push({
         address: this.currentAccount.tokenAddress!.address!,
         amount: MIN_SATOSHIS,
