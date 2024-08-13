@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 import * as readline from "readline";
 import yargs from "yargs";
 
