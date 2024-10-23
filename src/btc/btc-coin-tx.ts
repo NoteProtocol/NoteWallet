@@ -1,21 +1,21 @@
-import {MIN_SATOSHIS} from "../config";
 import type {ISendToAddress, IUtxo} from "../types";
+import {MIN_SATOSHIS} from "../constants";
 import {bitcoin, ECPair, ECPairInterface} from "./btc-ecc";
 import {addPsbtPayUtxos, signPsbtInput} from "./btc-psbt";
 
+// Create a transaction to pay any number of addresses using P2WPKH or P2TR UTXOs
 export function createCoinPsbt(
   privateKey: ECPairInterface,
   utxos: IUtxo[],
   to: ISendToAddress[],
-  change: string,
+  change: string, // Change address
   network: bitcoin.Network,
-  feeRate: number,
-  fee = 1000
+  fee = 1000 // Assume a fee of 1000
 ) {
   const psbt = new bitcoin.Psbt({network});
   const totalInput = addPsbtPayUtxos(privateKey, psbt, utxos, network);
 
-  //send all to one address
+  // Send all to one address
   if (to.length === 1 && Number(to[0]!.amount) === totalInput) {
     const value = totalInput - fee;
     if (value < MIN_SATOSHIS) {
@@ -45,6 +45,7 @@ export function createCoinPsbt(
     }
   }
 
+  // Sign each input
   for (let i = 0; i < psbt.inputCount; i++) {
     const privateKeyWif = utxos[i]?.privateKeyWif;
     if (privateKeyWif) {

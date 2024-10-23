@@ -1,15 +1,20 @@
 import ecc from "@bitcoinerlab/secp256k1";
 import * as bitcoin from "bitcoinjs-lib";
-import {ECPairFactory} from "ecpair";
+import {ECPairFactory, ECPairInterface} from "ecpair";
+
+// const ecc = require("tiny-secp256k1");
+
+export * as bitcore from "bitcore-lib";
 
 bitcoin.initEccLib(ecc);
 const ECPair = ECPairFactory(ecc);
 export type {ECPairInterface} from "ecpair";
 export {ECPair, bitcoin, ecc};
 export type {Taptree} from "bitcoinjs-lib/src/types";
+export type {TapLeafScript} from "bip174/src/lib/interfaces";
 
 export function tweakSigner(
-  signer: bitcoin.Signer,
+  signer: bitcoin.Signer | ECPairInterface,
   opts: any = {}
 ): bitcoin.Signer {
   // @ts-ignore

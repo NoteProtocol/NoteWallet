@@ -1,7 +1,5 @@
 import type {ICoinConfig} from "./types";
 
-export const MIN_SATOSHIS = 546;
-
 export const WALLET_MNEMONIC = process.env.WALLET_MNEMONIC
   ? process.env.WALLET_MNEMONIC.replace(/^"|"$/g, "")
   : undefined;

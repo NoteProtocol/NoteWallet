@@ -1,21 +1,24 @@
 import type {ISendToAddress, IUtxo, NotePayload} from "../types";
-import {MAX_SEQUENCE} from "../constants";
-import {bitcoin, ECPairInterface, toXOnly} from "./btc-ecc";
+import {MAX_SEQUENCE, MIN_SATOSHIS} from "../constants";
+import {bitcoin, ECPairInterface} from "./btc-ecc";
 import {generateP2TRNoteInfoV1} from "./btc-note";
+import {finalizeP2TRNoteInput} from "./btc-p2tr-note";
 import {addPsbtPayUtxos, signPsbtInput} from "./btc-psbt";
-import {witnessStackToScriptWitness} from "./witness_stack_to_script_witness";
-import {MIN_SATOSHIS} from "../config";
 
+// Build a P2TR transaction to generate NOTE information
+// According to the protocol, the first input of the transaction is the NOTE information protocol, and the unlocking script is the NOTE script hash
+// The transaction output is for account notification
 export function createP2TRNotePsbtV1(
   privateKey: ECPairInterface,
   notePayload: NotePayload,
   noteUtxos: IUtxo[],
   payUtxos: IUtxo[],
   toAddresses: ISendToAddress[],
-  change: string,
+  change: string, // Change address
   network: bitcoin.Network,
   feeRate: number,
-  fee = 1000
+  fee: number = 1000, // Assume the fee is 1000
+  locktime?: number
 ) {
   const pubkey = privateKey.publicKey;
 
@@ -29,9 +32,10 @@ export function createP2TRNotePsbtV1(
 
   const psbt = new bitcoin.Psbt({network});
   psbt.setVersion(2);
-  psbt.setLocktime(notePayload.locktime ?? 0); // to change tx
+  psbt.setLocktime(locktime ?? 0); // to change tx
   let totalInput = 0;
   {
+    // Insert signature unlock at other locations
     for (let i = 0; i < noteUtxos.length; i++) {
       const noteUtxo = noteUtxos[i]!;
       const input = {
@@ -42,15 +46,17 @@ export function createP2TRNotePsbtV1(
           script: p2note.noteP2TR.output!,
           value: noteUtxo.satoshis,
         },
-        tapLeafScript: [tapLeafNoteScript],
+        tapLeafScript: [tapLeafNoteScript], // MAST script with NOTE redemption script
       };
       psbt.addInput(input);
       totalInput += noteUtxo.satoshis;
     }
   }
 
+  // Add recharge input
   totalInput += addPsbtPayUtxos(privateKey, psbt, payUtxos, network);
 
+  // Outputs
   let totalOutput = 0;
   for (const to of toAddresses) {
     psbt.addOutput({
@@ -60,8 +66,9 @@ export function createP2TRNotePsbtV1(
     totalOutput += Number(to.amount);
   }
 
+  // Add change
   const value = totalInput - totalOutput - fee;
-
+  // No funds
   if (value < 0) throw new Error("NoFund");
 
   if (value > MIN_SATOSHIS) {
@@ -71,31 +78,13 @@ export function createP2TRNotePsbtV1(
     });
   }
 
+  // Sign each input
   for (let i = 0; i < psbt.inputCount; i++) {
     signPsbtInput(privateKey, psbt, i);
   }
 
-  function getNoteFinalScripts(index: number, input: any) {
-    const scriptSolution = [
-      input.tapScriptSig[0].signature,
-      Buffer.from(notePayload.data0, "hex"),
-      Buffer.from(notePayload.data1, "hex"),
-      Buffer.from(notePayload.data2, "hex"),
-      Buffer.from(notePayload.data3, "hex"),
-      Buffer.from(notePayload.data4, "hex"),
-    ];
-    const witness = scriptSolution
-      .concat(tapLeafNoteScript.script)
-      .concat(tapLeafNoteScript.controlBlock);
-
-    const finalScriptWitness = witnessStackToScriptWitness(witness);
-
-    return {
-      finalScriptWitness,
-    };
-  }
   for (let i = 0; i < noteUtxos.length; i++) {
-    psbt.finalizeInput(i, getNoteFinalScripts);
+    finalizeP2TRNoteInput(psbt, i, tapLeafNoteScript, notePayload);
   }
 
   for (let i = noteUtxos.length; i < psbt.inputCount; i++) {

@@ -1,8 +1,8 @@
-import * as msgpack from "@msgpack/msgpack";
 import * as bitcore from "bitcore-lib";
 import Mnemonic from "bitcore-mnemonic";
 
 import type {
+  IBalance,
   IBroadcastResult,
   ICoinConfig,
   ISendToAddress,
@@ -14,7 +14,8 @@ import type {
   IWalletAccount,
   NotePayload,
 } from "./types";
-import {MIN_SATOSHIS} from "./config";
+import {MIN_SATOSHIS} from "./constants";
+import {buildNotePayload} from "./note";
 import {Urchain} from "./urchain";
 
 export abstract class Wallet {
@@ -43,7 +44,6 @@ export abstract class Wallet {
       this.importMnemonic(mnemonicStr, "ENGLISH");
     }
     this.urchain.health(); //.then((res) => console.log(res));
-    this.generateAccounts(10);
   }
 
   get explorer() {
@@ -74,11 +74,19 @@ export abstract class Wallet {
     this.currentAccount = this.createAccount(this.rootPath, this.accoutIndex);
   }
 
-  protected createAccount(
-    rootPath: string,
-    index: number,
+  // Create account
+  createAccount(
+    rootPath: string = this.rootPath,
+    index: number = 0,
     target = 0
   ): IWalletAccount {
+    const key = `${this.rootPath}/${target}/${index}`;
+    // If the account already exists, no need to create it again, just return the existing account
+    const existAccount = this.accountCollection[key];
+    if (existAccount) {
+      return existAccount;
+    }
+    // Generating an account is time-consuming
     const extPath = `m/${target}/${index}`;
     const rootHDKey = this.rootHDPrivateKey.deriveChild(rootPath, false);
     const childHDKey = rootHDKey.deriveChild(extPath, false);
@@ -90,23 +98,14 @@ export abstract class Wallet {
       xpub: rootHDKey.hdPublicKey.toString(),
       privateKey: childHDKey.privateKey.toWIF(),
       publicKey: childHDKey.publicKey.toString("hex"),
+      network: this.config.network,
     };
 
-    this.accountCollection[`${rootPath}/${target}/${index}`] = account;
+    this.accountCollection[key] = account;
     return account;
   }
 
-  switchAccount(index: number) {
-    this._accoutIndex = index;
-    const existAccount = this.accountCollection[`${this.rootPath}/0/${index}`];
-    if (existAccount) {
-      this.currentAccount = existAccount;
-    } else {
-      this.currentAccount = this.createAccount(this.rootPath, index);
-    }
-    return this.currentAccount;
-  }
-
+  // Generate multiple accounts with specified rootPath
   generateSpecAccounts(rootPath: string, n: number, target = 0) {
     for (let i = 0; i < n; i++) {
       this.createAccount(rootPath, i, target);
@@ -114,31 +113,43 @@ export abstract class Wallet {
     return Object.keys(this.accountCollection);
   }
 
+  // Generate multiple accounts
   generateAccounts(n: number, target = 0) {
     return this.generateSpecAccounts(this.rootPath, n, target);
   }
 
+  // Switch account
+  switchAccount(index: number) {
+    this._accoutIndex = index;
+    this.currentAccount = this.createAccount(this.rootPath, index);
+    return this.currentAccount;
+  }
+
   get mainScriptHashList() {
+    // Get all scriptHashes in accountCollection
     return Object.values(this.accountCollection).map(
       (account) => account.mainAddress!.scriptHash
     );
   }
 
   get tokenScriptHashList() {
+    // Get all scriptHashes in accountCollection
     return Object.values(this.accountCollection).map(
       (account) => account.tokenAddress!.scriptHash
     );
   }
 
   get mainAddressList() {
+    // Get all main addresses in accountCollection
     return Object.values(this.accountCollection).map(
-      (account) => account.mainAddress!.address
+      (account) => account.mainAddress!.address!
     );
   }
 
   get tokenAddressList() {
+    // Get all Token addresses in accountCollection
     return Object.values(this.accountCollection).map(
-      (account) => account.tokenAddress!.address
+      (account) => account.tokenAddress!.address!
     );
   }
 
@@ -147,6 +158,7 @@ export abstract class Wallet {
   }
 
   abstract info(): any;
+  abstract refresh(): any;
 
   async getTokenUtxos(tick: string, amount?: bigint) {
     const tokenUtxos = await this.urchain.tokenutxos(
@@ -161,17 +173,33 @@ export abstract class Wallet {
     return tokenUtxos;
   }
 
-  abstract getBalance(): Promise<{
-    mainAddress: {
-      confirmed: bigint;
-      unconfirmed: bigint;
+  // Get Satoshi balance of the current account
+  async getBalance(): Promise<{
+    mainAddress: IBalance;
+    tokenAddress: IBalance;
+  }> {
+    const walletBalace = await this.fetchWalletBalace();
+    const tokenBalance = await this.urchain.balance(
+      this.currentAccount.tokenAddress!.scriptHash
+    );
+    return {
+      mainAddress: walletBalace,
+      tokenAddress: tokenBalance,
     };
-    tokenAddress: {
-      confirmed: bigint;
-      unconfirmed: bigint;
-    };
-  }>;
+  }
 
+  // Get balance of all accounts
+  async fetchWalletBalace() {
+    // Get all scriptHashes in accountCollection
+    const allScriptHashs: string[] = Object.values(this.accountCollection).map(
+      (account) => account.mainAddress!.scriptHash
+    );
+
+    const balance = await this.urchain.walletBalance(allScriptHashs);
+    return balance;
+  }
+
+  // Get UTXOs of all accounts
   async fetchAllAccountUtxos(includeUnbondedTokenUtxos = false) {
     const allScriptHashs: string[] = [];
     const allAccounts = new Map<string, IWalletAccount>();
@@ -204,65 +232,73 @@ export abstract class Wallet {
     return allUtxos;
   }
 
-  abstract send(toAddresses: ISendToAddress[]): Promise<IBroadcastResult>;
+  sendEstimate(
+    toAddresses: ISendToAddress[],
+    feePerKb?: number
+  ): Promise<number> {
+    throw new Error("Method not implemented.");
+  }
 
-  abstract buildN20Transaction(
+  // Send to address
+  abstract send(
+    toAddresses: ISendToAddress[],
+    feePerKb?: number
+  ): Promise<IBroadcastResult>;
+
+  protected abstract buildNoteTransaction(
     payload: NotePayload,
     tokenAddresses?: ISendToAddress[] | ISendToScript[],
     noteUtxos?: IUtxo[],
     payUtxos?: IUtxo[],
-    feeRate?: number
+    feePerKb?: number
   ): Promise<ITransaction>;
 
-  abstract buildN20PayloadTransaction(
-    payload: NotePayload,
+  abstract buildEmptyTokenUTXO(): Promise<IUtxo>;
+
+  abstract buildPayloadTransaction(
+    data: any,
     toAddress?: string,
     noteUtxo?: IUtxo,
     payUtxos?: IUtxo[],
-    feeRate?: number
+    feePerKb?: number,
+    locktime?: number,
+    extOutputs?: ISendToAddress[]
   ): Promise<ITransaction>;
 
-  abstract buildCommitPayloadTransaction(
-    payload: NotePayload,
+  abstract buildCommitDataTransaction(
+    data: any,
     toAddress: string,
     noteUtxo?: IUtxo,
     payUtxos?: IUtxo[],
-    feeRate?: number
+    feePerKb?: number
   ): Promise<ITransaction>;
 
-  async broadcastTransaction(tx: ITransaction): Promise<IBroadcastResult> {
+  async broadcastTransaction(tx: {txHex: string}): Promise<IBroadcastResult> {
     return await this.urchain.broadcast(tx.txHex);
   }
 
-  async mint(payload: NotePayload, _toAddress?: string) {
-    const tx = await this.buildN20Transaction(payload);
+  async mint(payload: NotePayload, toAddress?: string) {
+    //NOTICE:注意，这里的toAddress未使用
+    const tx = await this.buildNoteTransaction(payload);
     return await this.broadcastTransaction(tx);
   }
 
-  buildN20Payload(data: string | object, useScriptSize = false) {
-    const encodedData = msgpack.encode(data, {
-      sortKeys: true,
-      useBigInt64: true,
+  abstract fetch(address: string): any;
+
+  abstract tokenBalance(address: string, tick: string): any;
+
+  balance(address: string): Promise<IBalance> {
+    return Promise.resolve({
+      confirmed: 0n,
+      unconfirmed: 0n,
     });
-    console.log(msgpack.decode(encodedData), {
-      useBigInt64: true,
-    });
-    const buffer = Buffer.from(encodedData);
-    const payload: NotePayload = {
-      data0: buffer.toString("hex"),
-      data1: "",
-      data2: "",
-      data3: "",
-      data4: "",
-    };
-    return payload;
   }
 
   async mintText(text: string) {
-    return this.mint(this.buildN20Payload(text));
+    return this.mint(buildNotePayload(text));
   }
 
-  async sendToken(toAddress: string, tick: string, amt: bigint) {
+  async sendTokenCommon(toAddress: string, tick: string, amt: bigint) {
     const tokenUtxos = await this.getTokenUtxos(tick, amt);
     const balance = tokenUtxos.reduce(
       (acc: bigint, cur: ITokenUtxo) => acc + BigInt(cur.amount),
@@ -271,17 +307,19 @@ export abstract class Wallet {
     if (balance < amt) {
       throw new Error("Insufficient balance");
     }
+    //如果有误发到主地址的Token，那么可以挽救
+    const missedTokenUtxos = await this.urchain.tokenutxos(
+      [this.currentAccount.mainAddress!.scriptHash],
+      tick
+    );
     const toAddresses: ISendToAddress[] = [
       {
         address: toAddress,
         amount: MIN_SATOSHIS,
       },
     ];
-    const missedTokenUtxos = await this.urchain.tokenutxos(
-      [this.currentAccount.mainAddress!.scriptHash],
-      tick
-    );
     if (balance > BigInt(amt) || missedTokenUtxos.length > 0) {
+      //如果有余量，那么添加找零地址toAddresses
       toAddresses.push({
         address: this.currentAccount.tokenAddress!.address!,
         amount: MIN_SATOSHIS,
@@ -305,11 +343,90 @@ export abstract class Wallet {
       );
     }
 
-    const tx = await this.buildN20Transaction(
-      this.buildN20Payload(transferData),
+    return {
+      payload: buildNotePayload(transferData),
       toAddresses,
       tokenUtxos,
-      payUtxos
+      payUtxos,
+    };
+  }
+
+  async sendTokenEstimate(
+    toAddress: string,
+    tick: string,
+    amt: bigint,
+    feePerKb?: number
+  ) {
+    const common = await this.sendTokenCommon(toAddress, tick, amt);
+    const tx = await this.buildNoteTransaction(
+      common.payload,
+      common.toAddresses,
+      common.tokenUtxos,
+      common.payUtxos,
+      feePerKb
+    );
+    return tx.realFee;
+  }
+
+  async sendToken(
+    toAddress: string,
+    tick: string,
+    amt: bigint,
+    feePerKb?: number
+  ) {
+    const common = await this.sendTokenCommon(toAddress, tick, amt);
+    const tx = await this.buildNoteTransaction(
+      common.payload,
+      common.toAddresses,
+      common.tokenUtxos,
+      common.payUtxos,
+      feePerKb
+    );
+    return await this.broadcastTransaction(tx);
+  }
+
+  // Transfer N20 contract Token
+  async sendTokenToMultiAddresses(tick: string, toAddresses: ISendToAddress[]) {
+    const tokenAmounts: bigint[] = [];
+    const tokenAddresses: ISendToAddress[] = [];
+    // Get Token UTXOs
+    const tokenUtxos = await await this.getTokenUtxos(tick);
+    const balance = tokenUtxos.reduce(
+      (acc: bigint, cur: ITokenUtxo) => acc + BigInt(cur.amount),
+      0n
+    );
+    let total = 0n;
+    for (let i = 0; i < toAddresses.length; i++) {
+      const amt = BigInt(toAddresses[i]!.amount);
+      total += amt;
+      tokenAmounts.push(amt);
+      tokenAddresses.push({
+        address: toAddresses[i]!.address,
+        amount: MIN_SATOSHIS,
+      });
+    }
+
+    if (balance < total) {
+      throw new Error("Insufficient balance");
+    }
+
+    if (balance > BigInt(total)) {
+      tokenAddresses.push({
+        address: this.currentAccount.tokenAddress!.address!,
+        amount: MIN_SATOSHIS,
+      });
+    }
+    const transferData: ITransferN20Data = {
+      p: "n20",
+      op: "transfer",
+      tick,
+      amt: tokenAmounts,
+    };
+
+    const tx = await this.buildNoteTransaction(
+      buildNotePayload(transferData),
+      tokenAddresses,
+      tokenUtxos
     );
     const result = await this.broadcastTransaction(tx);
 

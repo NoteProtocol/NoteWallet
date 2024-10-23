@@ -7,14 +7,17 @@ import {
   ECPairInterface,
   schnorrValidator,
   toXOnly,
+  tweakSigner,
 } from "./btc-ecc";
 import {generateP2TRNoteInfo} from "./btc-note";
 
+// Add payment UTXOs
 export function addPsbtPayUtxos(
   privateKey: ECPairInterface,
   psbt: bitcoin.Psbt,
   utxos: IUtxo[],
-  network: bitcoin.Network
+  network: bitcoin.Network,
+  sighashType?: number
 ) {
   let totalInput = 0;
   for (const utxo of utxos) {
@@ -35,6 +38,7 @@ export function addPsbtPayUtxos(
           script: Buffer.from(utxo.script, "hex"),
           value: utxo.satoshis,
         },
+        ...(sighashType ? {sighashType} : {}),
       };
       psbt.addInput(input);
       totalInput += utxo.satoshis;
@@ -53,7 +57,8 @@ export function addPsbtPayUtxos(
           script: Buffer.from(utxo.script, "hex"),
           value: utxo.satoshis,
         },
-        witnessScript: redeemScript, //. A Buffer of the witnessScript for P2WSH
+        witnessScript: redeemScript, // A Buffer of the witnessScript for P2WSH
+        ...(sighashType ? {sighashType} : {}),
       };
       psbt.addInput(input);
       totalInput += utxo.satoshis;
@@ -67,6 +72,7 @@ export function addPsbtPayUtxos(
           value: utxo.satoshis,
         },
         tapInternalKey: xOnlyPubkey,
+        ...(sighashType ? {sighashType} : {}),
       };
       psbt.addInput(input);
       totalInput += utxo.satoshis;
@@ -87,7 +93,8 @@ export function addPsbtPayUtxos(
           script: p2note.p2pkP2TR.output!,
           value: utxo.satoshis,
         },
-        tapLeafScript: [tapLeafP2PKScript],
+        tapLeafScript: [tapLeafP2PKScript], // MAST script with public key unlock
+        ...(sighashType ? {sighashType} : {}),
       };
       psbt.addInput(input);
       totalInput += utxo.satoshis;
@@ -96,25 +103,30 @@ export function addPsbtPayUtxos(
   return totalInput;
 }
 
+// Sign inputs using private key
 export function signPsbtInput(
   privateKey: ECPairInterface,
   psbt: bitcoin.Psbt,
   inputIndex: number
 ) {
-  if (psbt.data.inputs[inputIndex]!.tapLeafScript) {
-    psbt.signInput(inputIndex, privateKey);
+  const input = psbt.data.inputs[inputIndex]!;
+  const sighashType = input.sighashType;
+  const allowedSighashTypes = sighashType ? [sighashType] : undefined;
+  if (input.tapLeafScript) {
+    // If there's a tapLeafScript, it's Taproot MAST, use regular private key to sign
+    psbt.signInput(inputIndex, privateKey, allowedSighashTypes);
+    // Taproot uses schnorr, so we need to use a special validator
     psbt.validateSignaturesOfInput(inputIndex, schnorrValidator);
-  } else if (psbt.data.inputs[inputIndex]!.tapInternalKey) {
-    const pubkey = privateKey.publicKey;
-    const xOnlyPubkey = toXOnly(pubkey);
-    const tweakedPrivateKey = privateKey.tweak(
-      bitcoin.crypto.taggedHash("TapTweak", xOnlyPubkey)
-    );
+  } else if (input.tapInternalKey) {
+    const tweakedPrivateKey = tweakSigner(privateKey);
 
-    psbt.signInput(inputIndex, tweakedPrivateKey);
+    // If there's a tapInternalKey, it's Taproot, need to use tweaked private key to sign
+    psbt.signInput(inputIndex, tweakedPrivateKey, allowedSighashTypes);
+    // Taproot uses schnorr, so we need to use a special validator
     psbt.validateSignaturesOfInput(inputIndex, schnorrValidator);
   } else {
-    psbt.signInput(inputIndex, privateKey);
+    psbt.signInput(inputIndex, privateKey, allowedSighashTypes);
     psbt.validateSignaturesOfInput(inputIndex, eccValidator);
   }
+  return psbt;
 }

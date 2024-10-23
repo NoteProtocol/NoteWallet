@@ -1,4 +1,4 @@
-require('dotenv').config();
+require("dotenv").config();
 
 import * as readline from "readline";
 import yargs from "yargs";
@@ -7,8 +7,9 @@ import type {Wallet} from "./wallet";
 import {BTCWallet} from "./btc/btc-wallet";
 import {coins, WALLET_MNEMONIC} from "./config";
 import {publishSmartContract} from "./publish";
-import {deployPowToken, mintPowToken} from "./mint";
 import {interpolate} from "./utils";
+import n20SimpleToken from "./n20/simple-token";
+import n20PowToken from "./n20/pow-token";
 
 export class CommandLineWallet {
   private wallets: Record<string, Wallet> = {};
@@ -108,23 +109,21 @@ export class CommandLineWallet {
             console.log("No wallet selected");
             return;
           }
-          console.log("Balance:", await this.currentWallet.getBalance());
+          console.log("Balance:", await this.currentWallet.fetchWalletBalace());
         }
       )
       .command(
         "send [to] [amount]",
         "Send Bitcoin",
-        (yargs) => {
+        (yargs: any) => {
           yargs
             .positional("to", {
               describe: "Address to send Bitcoin to",
               type: "string",
-              demandOption: true,
             })
             .positional("amount", {
               describe: "Amount of Bitcoin to send",
               type: "number",
-              demandOption: true,
             });
         },
         async (argv) => {
@@ -134,10 +133,7 @@ export class CommandLineWallet {
           }
           if (argv.to && argv.amount) {
             const result = await this.currentWallet.send([
-              {
-                address: argv.to as string,
-                amount: argv.amount as number,
-              },
+              {address: argv.to as string, amount: argv.amount as number},
             ]);
             if (result.success) {
               console.log(
@@ -162,7 +158,7 @@ export class CommandLineWallet {
             return;
           }
           if (argv.toScript && argv.tick && argv.amt) {
-            const {result} = await this.currentWallet.sendToken(
+            const result = await this.currentWallet.sendToken(
               argv.toScript as string,
               argv.tick as string,
               argv.amt as bigint
@@ -202,6 +198,33 @@ export class CommandLineWallet {
             return;
           }
           console.log("Info:", this.currentWallet.info());
+        }
+      )
+      .command(
+        "refresh",
+        "Refresh wallet fetch all record",
+        (yargs: any) => {},
+        async (argv: any) => {
+          if (!this.currentWallet) {
+            console.log("No wallet selected");
+            return;
+          }
+          console.log("refresh:", await this.currentWallet.refresh());
+        }
+      )
+      .command(
+        "fetch [address]",
+        "Get a address balance and utxos",
+        (yargs: any) => {},
+        async (argv: any) => {
+          if (!this.currentWallet) {
+            console.log("No wallet selected");
+            return;
+          }
+          if (argv.address) {
+            const info = await this.currentWallet.fetch(argv.address as string);
+            console.log("Balance and Utxos:", info);
+          }
         }
       )
       .command(
@@ -297,7 +320,7 @@ export class CommandLineWallet {
             console.log("No wallet selected");
             return;
           }
-          const {result} = await deployPowToken(this.currentWallet);
+          const result = await n20PowToken.deploy(this.currentWallet);
           if (result.success) {
             console.log(
               "Succeeded:",
@@ -319,38 +342,44 @@ export class CommandLineWallet {
             console.log("No wallet selected");
             return;
           }
-          const {result, error} = await mintPowToken(this.currentWallet);
+          const result = await n20PowToken.mint(this.currentWallet);
           if (result?.success) {
             console.log(
               "Succeeded:",
               interpolate(this.currentWallet.explorer!.tx, {
+                //@ts-ignore
                 txId: result.txId,
               })
             );
           } else {
-            console.log(error);
+            console.log(result.error);
           }
         }
       )
       .command(
-        "publish",
+        "publish [contract]",
         "Publish Smart Contract",
-        (yargs) => {},
-        async (argv) => {
+        (yargs: any) => {},
+        async (argv: any) => {
           if (!this.currentWallet) {
             console.log("No wallet selected");
             return;
           }
-          const result = await publishSmartContract(this.currentWallet);
-          if (result && result.success) {
-            console.log(
-              "Succeeded:",
-              interpolate(this.currentWallet.explorer!.tx, {
-                txId: result.txId,
-              })
+          if (argv.contract) {
+            const result = await publishSmartContract(
+              this.currentWallet,
+              argv.contract as string
             );
-          } else {
-            console.log(result);
+            if (result && result.success) {
+              console.log(
+                "Succeeded:",
+                interpolate(this.currentWallet.explorer!.tx, {
+                  txId: result.txId,
+                })
+              );
+            } else {
+              console.log(result);
+            }
           }
         }
       )

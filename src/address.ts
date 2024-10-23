@@ -1,5 +1,7 @@
 import * as bitcore from "bitcore-lib";
 
+import {hash256} from "./note";
+
 export const mapAddressToScriptHash = (
   addressStr: string,
   network = "livenet"
@@ -16,20 +18,15 @@ export const mapAddressToScriptHash = (
     scriptHex = script.toBuffer().toString("hex");
   }
   // with SHA256 hash
-  const hash256 = bitcore.crypto.Hash.sha256(Buffer.from(scriptHex, "hex"));
   // which is sent to the server reversed as:
-  const scriptHash = hash256.reverse().toString("hex");
+  const scriptHash = calcScriptHash(Buffer.from(scriptHex, "hex"));
   return {
     scriptHex,
     scriptHash,
   };
 };
 
-export function calcScriptHash(scriptHex: string) {
-  // with SHA256 hash:
-  const hash256 = bitcore.crypto.Hash.sha256(Buffer.from(scriptHex, "hex"));
-  // which is sent to the server reversed as:
-  const reversedHash256 = hash256.reverse();
-  const reversedHash256Hex = reversedHash256.toString("hex");
+export function calcScriptHash(scriptBuffer: Buffer) {
+  const reversedHash256Hex = hash256(scriptBuffer).reverse().toString("hex");
   return reversedHash256Hex;
 }

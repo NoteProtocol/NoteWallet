@@ -95,7 +95,7 @@ We offer several example programs for developers to publish their own contracts,
 
 ## Publish Smart Contract
 ```
-publish
+publish [contract name]
 ```
 
 ## Deploy Token

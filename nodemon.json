@@ -6,5 +6,5 @@
   "ignore": [
     "src/**/*.spec.ts"
   ],
-  "exec": "ts-node ./src/command-line.ts"
+  "exec": "ts-node -r tsconfig-paths/register ./src/command-line.ts"
 }

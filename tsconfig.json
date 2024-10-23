@@ -2,6 +2,9 @@
     "compilerOptions": {
         "target": "ESNext",
         "baseUrl": ".",
+        "paths": {
+          "@/*": ["src/*"]
+        },
         "useDefineForClassFields": false,
         "module": "NodeNext",
         "moduleResolution": "NodeNext",

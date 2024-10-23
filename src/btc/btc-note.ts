@@ -1,10 +1,11 @@
-import {buildCommitNoteScript, buildNoteScript} from "../note";
-import {NotePayload} from "../types";
+import {buildDataScript, buildNoteScript} from "../note";
 import {bitcoin, Taptree, toXOnly} from "./btc-ecc";
 
+// Generate a regular NOTE locking script
 export function generateP2TRNoteInfo(pubkey: Buffer, network: bitcoin.Network) {
   const xOnlyPubkey = toXOnly(pubkey);
 
+  // Construct a regular NOTE locking script
   const note_script = bitcoin.script.fromASM(buildNoteScript(xOnlyPubkey));
 
   const p2pk_script_asm = `${xOnlyPubkey.toString("hex")} OP_CHECKSIG`;
@@ -56,15 +57,16 @@ export function generateP2TRNoteInfo(pubkey: Buffer, network: bitcoin.Network) {
   };
 }
 
-export function generateP2TRCommitNoteInfo(
-  payload: NotePayload,
+// Generate a Taproot transaction that packs all data into the redemption script
+export function generateP2TRCommitDataInfo(
+  msgpackEncodedData: Buffer,
   pubkey: Buffer,
   network: bitcoin.Network
 ) {
   const xOnlyPubkey = toXOnly(pubkey);
 
   const note_script = bitcoin.script.fromASM(
-    buildCommitNoteScript(payload, xOnlyPubkey)
+    buildDataScript(msgpackEncodedData, xOnlyPubkey)
   );
 
   const p2pk_script_asm = `${xOnlyPubkey.toString("hex")} OP_CHECKSIG`;
