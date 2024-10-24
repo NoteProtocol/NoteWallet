@@ -1,6 +1,6 @@
 {
   "name": "note-wallet",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "license": "MIT",
   "author": "Note Team",
   "main": "./src/index.ts",
